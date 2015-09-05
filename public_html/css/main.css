@@ -1,0 +1,33 @@
+html {
+    background: url(../img/bg.jpg) no-repeat center center fixed; 
+    -webkit-background-size: cover;
+    -moz-background-size: cover;
+    -o-background-size: cover;
+    background-size: cover;
+}
+html, body {
+    height: 100%;
+    margin: 0;
+}
+
+.cover-container{
+    display: table;
+    height: 100%;
+    width: 100%;
+    min-height: 100%;
+    background: radial-gradient(circle, rgba(0,0,0,.9), rgba(10,10,10,.3), rgba(250,250,250,.1));
+}
+.cover-wrapper{
+    vertical-align: middle;
+    display: table-cell;
+}
+
+#mainCanvas{
+    position: absolute;
+    top:0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    margin:auto;
+    background: white;
+}
