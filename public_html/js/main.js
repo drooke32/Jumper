@@ -2,7 +2,6 @@
 var canvas = document.getElementById('mainCanvas');
 canvas.width = window.innerWidth * .8;
 canvas.height = window.innerHeight * .8;
-var normalizer = 10;
 var leftBoundary = 20;
 var rightBoundary = canvas.width - 70;
 var bottomBoundary = canvas.height - 70;
@@ -16,6 +15,7 @@ var player = {
     y: canvas.height-70,
     h: 50,
     w: 50,
+    normalizer: 10,
     velocity: 0,
     acceleration: 15,
     maxVelocity: 150,
@@ -23,7 +23,72 @@ var player = {
     lift: 0,
     gravity: 15,
     maxLift: -200,
-    jumping: false
+    jumping: false,
+    validatePosition: function(leftBoundary, rightBoundary){
+      if((this.x + (this.velocity/this.normalizer)) < leftBoundary){
+        this.x = 20;
+        this.velocity = 0;
+        }
+        else if((this.x + (this.velocity/this.normalizer)) > rightBoundary){
+            this.x = rightBoundary;
+            this.velocity = 0;
+        }  
+    },
+    moveLeft: function(){
+        this.velocity = this.velocity - this.acceleration < -this.maxVelocity ? this.velocity = -this.maxVelocity : this.velocity -= this.acceleration;
+    },
+    moveRight: function(){
+        this.velocity = this.velocity + this.acceleration > this.maxVelocity ? this.velocity = this.maxVelocity : this.velocity += this.acceleration;
+    },
+    jump: function(){
+        //only jump while they're not already jumping or falling
+    if(this.lift === this.gravity && !this.jumping){
+        this.lift = this.maxLift;
+        this.jumping = true;
+    }
+    },
+    move: function(leftBoundary,rightBoundary){
+        this.validatePosition(leftBoundary, rightBoundary);
+        if(keys[37]){
+            this.moveLeft();
+        }
+        if(keys[39]){
+            this.moveRight();
+        }
+        if(keys[32]){
+            this.jump();
+        }
+    },
+    currentX: function(){
+        return this.x += (this.velocity/this.normalizer);
+    },
+    currentY: function(bottomBoundary){
+       //once platforms are in, check if the y coordinate matches any of their areas
+        //for now, just check if the y coordinate is greater than or = to floor
+        if(this.y + (this.lift/this.normalizer) >= bottomBoundary){
+            this.lift = 0;
+            this.y = bottomBoundary;
+            this.jumping = false;
+        }
+        return this.y += (this.lift/this.normalizer); 
+    },
+    physics: function(){
+        this.applyFriction();
+        this.applyGravity();
+    },
+    applyFriction: function(){
+        if (this.velocity > 0) {
+            this.velocity -= this.friction;
+        }else if(this.velocity < 0){
+            this.velocity += this.friction;
+        }else if(this.velocity < this.friction || this.velocity > -this.friction){
+            this.velocity = 0;
+        }
+    },
+    applyGravity: function(){
+        this.lift += this.gravity;
+    }
+    
 };
 
 /**
@@ -37,124 +102,11 @@ var redraw = function(){
     ctx.strokeRect(20, 20, canvas.width-40, canvas.height-40);
 
     //draw the player rectangle based on the stored player coordinates
-    validateCoordinates();
-    movePlayer();
-    ctx.strokeRect(currentXPosition(), currentYPosition(), player.h, player.w);
-    physics();
+    player.move(leftBoundary, rightBoundary);
+    ctx.strokeRect(player.currentX(), player.currentY(bottomBoundary), player.h, player.w);
+    player.physics();
     requestAnimationFrame(redraw);
 };
-
-/**
- * 
- * @returns {Number|normalizer|player.xplayer.velocity}
- */
-function currentXPosition(){
-    return player.x += (player.velocity/normalizer);
-}
-
-/**
- * 
- * @returns {player.yplayer.lift|Number|normalizer}
- */
-function currentYPosition(){
-    
-    //once platforms are in, check if the y coordinate matches any of their areas
-    //for now, just check if the y coordinate is greater than or = to floor
-    if(player.y + (player.lift/normalizer) >= bottomBoundary){
-        player.lift = 0;
-        player.y = bottomBoundary;
-        player.jumping = false;
-    }
-    return player.y += (player.lift/normalizer);
-}
-
-/**
- * 
- * @returns {undefined}
- */
-function validateCoordinates(){
-    if((player.x + (player.velocity/normalizer)) < leftBoundary){
-        player.x = 20;
-        player.velocity = 0;
-    }
-    else if((player.x + (player.velocity/normalizer)) > rightBoundary){
-        player.x = rightBoundary;
-        player.velocity = 0;
-    }
-}
-
-/**
- * 
- * @returns {undefined}
- */
-function moveRight(){
-    //increase the players velocity to the right
-    player.velocity = player.velocity + player.acceleration > player.maxVelocity ? player.velocity = player.maxVelocity : player.velocity += player.acceleration;
-}
-
-/**
- * 
- * @returns {undefined}
- */
-function moveLeft(){
-    //increase the players velocity to the left
-    player.velocity = player.velocity - player.acceleration < -player.maxVelocity ? player.velocity = -player.maxVelocity : player.velocity -= player.acceleration;
-}
-
-/**
- * 
- * @returns {undefined}
- */
-function jump(){
-    //only jump while they're not already jumping or falling
-    if(player.lift === player.gravity && !player.jumping){
-        player.lift = player.maxLift;
-        player.jumping = true;
-    }
-}
-
-/**
- * 
- * @returns {undefined}
- */
-function physics(){
-    decelerate();
-    gravity();
-}
-
-/**
- * 
- * @returns {undefined}
- */
-function decelerate(){
-    if (player.velocity > 0) {
-        player.velocity -= player.friction;
-    }else if(player.velocity < 0){
-        player.velocity += player.friction;
-    }else if(player.velocity < player.friction || player.velocity > -player.friction){
-        player.velocity = 0;
-    }
-}
-
-/**
- * 
- * @returns {undefined}
- */
-function gravity(){
-    player.lift += player.gravity;
-}
-
-function movePlayer(){
-    if(keys[37]){
-        moveLeft();
-    }
-    if(keys[39]){
-        moveRight();
-    }
-    if(keys[32]){
-        jump();
-    }
-}
 
 /**
  * 
