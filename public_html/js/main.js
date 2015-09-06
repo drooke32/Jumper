@@ -17,11 +17,11 @@ var player = {
     h: 50,
     w: 50,
     velocity: 0,
-    acceleration: 20,
-    maxVelocity: 200,
+    acceleration: 15,
+    maxVelocity: 150,
     friction: 10,
     lift: 0,
-    gravity: 20,
+    gravity: 15,
     maxLift: -200,
     jumping: false
 };
@@ -73,11 +73,13 @@ function currentYPosition(){
  * @returns {undefined}
  */
 function validateCoordinates(){
-    if(player.x < leftBoundary){
+    if((player.x + (player.velocity/normalizer)) < leftBoundary){
         player.x = 20;
+        player.velocity = 0;
     }
-    else if(player.x > rightBoundary){
+    else if((player.x + (player.velocity/normalizer)) > rightBoundary){
         player.x = rightBoundary;
+        player.velocity = 0;
     }
 }
 
@@ -105,10 +107,9 @@ function moveLeft(){
  */
 function jump(){
     //only jump while they're not already jumping or falling
-    if(!player.jumping){
-        if(player.lift === 20){
-            player.lift = player.maxLift; 
-        }
+    if(player.lift === player.gravity && !player.jumping){
+        player.lift = player.maxLift;
+        player.jumping = true;
     }
 }
 
@@ -172,7 +173,6 @@ function bindMovementKeys(){
 
             case 32: // space
                 keys[32] = true;
-                player.jumping = true;
             break;
 
             default: return; // exit this handler for other keys
