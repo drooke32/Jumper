@@ -7,6 +7,7 @@ var leftBoundary = 20;
 var rightBoundary = canvas.width - 70;
 var bottomBoundary = canvas.height - 70;
 var topBoundary = 70;
+var keys = [];
 //get the canvas context
 var ctx = canvas.getContext('2d'); 
 //setup the player and it's starting co-ordinates
@@ -18,9 +19,11 @@ var player = {
     velocity: 0,
     acceleration: 20,
     maxVelocity: 200,
-    friction: 5,
+    friction: 10,
     lift: 0,
-    gravity: 50
+    gravity: 20,
+    maxLift: -200,
+    jumping: false
 };
 
 /**
@@ -35,6 +38,7 @@ var redraw = function(){
 
     //draw the player rectangle based on the stored player coordinates
     validateCoordinates();
+    movePlayer();
     ctx.strokeRect(currentXPosition(), currentYPosition(), player.h, player.w);
     physics();
     requestAnimationFrame(redraw);
@@ -59,6 +63,7 @@ function currentYPosition(){
     if(player.y + (player.lift/normalizer) >= bottomBoundary){
         player.lift = 0;
         player.y = bottomBoundary;
+        player.jumping = false;
     }
     return player.y += (player.lift/normalizer);
 }
@@ -99,7 +104,12 @@ function moveLeft(){
  * @returns {undefined}
  */
 function jump(){
-    player.lift = -500;
+    //only jump while they're not already jumping or falling
+    if(!player.jumping){
+        if(player.lift === 20){
+            player.lift = player.maxLift; 
+        }
+    }
 }
 
 /**
@@ -133,6 +143,18 @@ function gravity(){
     player.lift += player.gravity;
 }
 
+function movePlayer(){
+    if(keys[37]){
+        moveLeft();
+    }
+    if(keys[39]){
+        moveRight();
+    }
+    if(keys[32]){
+        jump();
+    }
+}
+
 /**
  * 
  * @returns {undefined}
@@ -141,15 +163,34 @@ function bindMovementKeys(){
     $(document).keydown(function(e) {
         switch(e.which) {
             case 37: // left
-                moveLeft();
+                keys[37] = true;
             break;
 
             case 39: // right
-                moveRight();
+                keys[39] = true;
             break;
 
             case 32: // space
-                jump();
+                keys[32] = true;
+                player.jumping = true;
+            break;
+
+            default: return; // exit this handler for other keys
+        }
+        e.preventDefault();
+    });
+    $(document).keyup(function(e) {
+        switch(e.which) {
+            case 37: // left
+                keys[37] = false;
+            break;
+
+            case 39: // right
+                keys[39] = false;
+            break;
+
+            case 32: // space
+                keys[32] = false;
             break;
 
             default: return; // exit this handler for other keys
