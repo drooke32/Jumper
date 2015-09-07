@@ -1,148 +1,75 @@
-//grab the canvas and set it's width/height to 80% of the window
-var canvas = document.getElementById('mainCanvas');
-canvas.width = window.innerWidth * .8;
-canvas.height = window.innerHeight * .8;
-var leftBoundary = 20;
-var rightBoundary = canvas.width - 70;
-var bottomBoundary = canvas.height - 70;
-var topBoundary = 70;
-var keys = [];
-//get the canvas context
-var ctx = canvas.getContext('2d'); 
-//setup the player and it's starting co-ordinates
-var player = {
-    x: 20,
-    y: canvas.height-70,
-    h: 50,
-    w: 50,
-    normalizer: 10,
-    velocity: 0,
-    acceleration: 15,
-    maxVelocity: 150,
-    friction: 10,
-    lift: 0,
-    gravity: 15,
-    maxLift: -200,
-    jumping: false,
-    validatePosition: function(leftBoundary, rightBoundary){
-      if((this.x + (this.velocity/this.normalizer)) < leftBoundary){
-        this.x = 20;
-        this.velocity = 0;
-        }
-        else if((this.x + (this.velocity/this.normalizer)) > rightBoundary){
-            this.x = rightBoundary;
-            this.velocity = 0;
-        }  
-    },
-    moveLeft: function(){
-        this.velocity = this.velocity - this.acceleration < -this.maxVelocity ? this.velocity = -this.maxVelocity : this.velocity -= this.acceleration;
-    },
-    moveRight: function(){
-        this.velocity = this.velocity + this.acceleration > this.maxVelocity ? this.velocity = this.maxVelocity : this.velocity += this.acceleration;
-    },
-    jump: function(){
-        //only jump while they're not already jumping or falling
-    if(this.lift === this.gravity && !this.jumping){
-        this.lift = this.maxLift;
-        this.jumping = true;
-    }
-    },
-    move: function(leftBoundary,rightBoundary){
-        this.validatePosition(leftBoundary, rightBoundary);
-        if(keys[37]){
-            this.moveLeft();
-        }
-        if(keys[39]){
-            this.moveRight();
-        }
-        if(keys[32]){
-            this.jump();
-        }
-    },
-    currentX: function(){
-        return this.x += (this.velocity/this.normalizer);
-    },
-    currentY: function(bottomBoundary){
-       //once platforms are in, check if the y coordinate matches any of their areas
-        //for now, just check if the y coordinate is greater than or = to floor
-        if(this.y + (this.lift/this.normalizer) >= bottomBoundary){
-            this.lift = 0;
-            this.y = bottomBoundary;
-            this.jumping = false;
-        }
-        return this.y += (this.lift/this.normalizer); 
-    },
-    physics: function(){
-        this.applyFriction();
-        this.applyGravity();
-    },
-    applyFriction: function(){
-        if (this.velocity > 0) {
-            this.velocity -= this.friction;
-        }else if(this.velocity < 0){
-            this.velocity += this.friction;
-        }else if(this.velocity < this.friction || this.velocity > -this.friction){
-            this.velocity = 0;
-        }
-    },
-    applyGravity: function(){
-        this.lift += this.gravity;
-    }
-    
-};
 
 /**
  * 
- * @returns {undefined}
+ * Recursive method used to draw the game on the canvas
+ * 
+ * @param {type} player
+ * @param {type} world
+ * @param {type} canvas
+ * @param {type} ctx
  */
-var redraw = function(){
+function redraw(player, world, canvas, ctx){
     //fill the canvas with white
     ctx.fillStyle = "#fff";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
+    //add a border around the canvas
     ctx.strokeRect(20, 20, canvas.width-40, canvas.height-40);
-
-    //draw the player rectangle based on the stored player coordinates
-    player.move(leftBoundary, rightBoundary);
-    ctx.strokeRect(player.currentX(), player.currentY(bottomBoundary), player.h, player.w);
-    player.physics();
-    requestAnimationFrame(redraw);
+    //check to make sure the player won't be moving off of the world
+    world.validatePlayerPosition(player);
+    //move the player then apply the world physics to the player    
+    player.move();    
+    world.applyPhysics(player);
+    //draw the player
+    ctx.strokeRect(player.currentX(), player.currentY(), player.height, player.width);    
+    //wrap the callback function in an anon func so we can pass in parameters
+    requestAnimationFrame(function(){redraw(player,world, canvas, ctx);});
 };
 
 /**
+ * Bind the arrow and space keys to the player.movement array
+ * Storing the keypresses in the player movement allows for the player
+ * to move in more than 1 direction at a time (jump and side-to-side in particular)
  * 
- * @returns {undefined}
+ * @param {type} player
  */
-function bindMovementKeys(){
+function bindMovementKeys(player){
+    //bind the keydown of left/right arrow and space to
+    //set the corresponding keystroke value to true
     $(document).keydown(function(e) {
         switch(e.which) {
             case 37: // left
-                keys[37] = true;
+                //player.movement[37]
+                player.movement[37] = true;
             break;
 
             case 39: // right
-                keys[39] = true;
+                //player.movement[39]
+                player.movement[39] = true;
             break;
 
             case 32: // space
-                keys[32] = true;
+                //player.movement[32]
+                player.movement[32] = true;
             break;
 
             default: return; // exit this handler for other keys
         }
         e.preventDefault();
     });
+    //bind the keyup of left/right arrow and space to
+    //set the corresponding keystroke value to false
     $(document).keyup(function(e) {
         switch(e.which) {
             case 37: // left
-                keys[37] = false;
+                player.movement[37] = false;
             break;
 
             case 39: // right
-                keys[39] = false;
+                player.movement[39] = false;
             break;
 
             case 32: // space
-                keys[32] = false;
+                player.movement[32] = false;
             break;
 
             default: return; // exit this handler for other keys
@@ -151,7 +78,42 @@ function bindMovementKeys(){
     });
 }
 
+/**
+ * Function used to place the passed in player at the appropriate starting spot
+ * for the passed in world
+ * 
+ * @param {type} player
+ * @param {type} world
+ */
+function placePlayerAtStart(player, world){
+    player.x = world.getStartingX();
+    player.y = world.getStartingY();
+}
+
+/**
+ * 
+ * Main game function used to create a player and a world, as well as setup the
+ * canvas and get it's context. Places the player at the starting position
+ * for the created world, binds the player movement keys and starts the
+ * recursive redraw function.
+ */
+function startGame(){
+    //grab the canvas and get it's context
+    var canvas = document.getElementById('mainCanvas');
+    canvas.width = window.innerWidth * .8;
+    canvas.height = window.innerHeight * .8;
+    var ctx = canvas.getContext('2d'); 
+    //generate the player and the world
+    var player = new Player();
+    var world = new World(canvas);
+    placePlayerAtStart(player, world);
+    bindMovementKeys(player);
+    redraw(player, world, canvas, ctx);
+}
+
+/** 
+ * Function to start the game on page load * 
+ */
 $(function(){
-    bindMovementKeys();
-    redraw();
+    startGame();    
 });
