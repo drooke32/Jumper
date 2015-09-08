@@ -12,10 +12,12 @@ function Player(unit){
     this.height = unit.getCalculatedHeight(2);
     this.width = unit.getCalculatedWidth(1);
     this.movement = [];
-    this.normalizer = unit.getCalculatedWidth(1) * 0.3;
+    this.normalizerRatio = 0.3;
+    this.normalizer = unit.getCalculatedWidth(1) * this.normalizerRatio;
     this.velocity = 0;
     this.maxVelocity = unit.getCalculatedWidth(4);
-    this.acceleration = unit.getCalculatedWidth(1) * 0.5;
+    this.accelerationRatio = 0.5;
+    this.acceleration = unit.getCalculatedWidth(1) * this.accelerationRatio;
     this.lift = 0;
     this.maxLift = -unit.getCalculatedWidth(5);
     this.jumping = false;
@@ -130,9 +132,20 @@ Player.prototype.nextY = function(){
  * 
  * @param {type} xPosition - the X coordinate where the player is to stop
  */
-Player.prototype.stopRunning = function(xPosition){
+Player.prototype.horizontalCollision = function(xPosition){
     this.x = xPosition;
     this.velocity = 0;
+};
+
+/**
+ * Method used to stop the player from moving up, mainly used when the player
+ * comes into contact with a worlds ceiling or bottom of a platform.
+ * 
+ * @param {type} yPosition - the y coordinate of the obstruction
+ */
+Player.prototype.verticalCollision = function(yPosition){
+    this.y = yPosition;
+    this.lift = 0;
 };
 
 /**
@@ -150,5 +163,3 @@ Player.prototype.land = function(yPosition){
     this.lift = 0;
     this.jumping = false;
 };
-
-

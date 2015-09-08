@@ -10,8 +10,10 @@ function World(unit){
     this.rightBoundary = unit.getCanvasWidth() - unit.getCalculatedWidth(2);
     this.bottomBoundary = unit.getCanvasHeight() - unit.getCalculatedHeight(3);
     this.topBoundary = unit.getCalculatedHeight(1);
-    this.gravity = unit.getCalculatedHeight(1) * 0.5;
-    this.friction = unit.getCalculatedWidth(1) * 0.3;
+    this.gravityRatio = 0.5;
+    this.frictionRatio = 0.25;
+    this.gravity = unit.getCalculatedHeight(1) * this.gravityRatio;
+    this.friction = unit.getCalculatedWidth(1) * this.frictionRatio;
 }
 
 /**
@@ -59,13 +61,13 @@ World.prototype.validatePlayerPosition = function(player){
     //check if the players next X coordinate will push them past the left 
     //boundary - if it does, stop the player from running at the left boundary
     if(player.nextX() < this.leftBoundary){
-        player.stopRunning(this.leftBoundary);
+        player.horizontalCollision(this.leftBoundary);
     }
     
     //check if the players next X coordinate will push them past the right 
     //boundary - if it does, stop the player from running at the right boundary
     else if(player.nextX() > this.rightBoundary){
-        player.stopRunning(this.rightBoundary);
+        player.horizontalCollision(this.rightBoundary);
     }
     
     //check if the players next Y coordinate will push them past the bottom 
@@ -73,6 +75,11 @@ World.prototype.validatePlayerPosition = function(player){
     if(player.nextY() >= this.bottomBoundary){
         player.land(this.bottomBoundary);
     }
+    
+    else if(player.nextY() <= this.topBoundary){
+        player.verticalCollision(this.topBoundary);
+    }
+    
 };
 
 /**
