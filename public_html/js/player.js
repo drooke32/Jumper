@@ -1,20 +1,23 @@
 
 /**
+ * 
  * Constructor for the Player object
+ * 
+ * @param {type} unit
  * @returns {Player}
  */
-function Player(){
+function Player(unit){
     this.x = 0;
     this.y = 0;
-    this.height = 50;
-    this.width = 50;
+    this.height = unit.getCalculatedHeight(2);
+    this.width = unit.getCalculatedWidth(1);
     this.movement = [];
-    this.normalizer = 10;
+    this.normalizer = unit.getCalculatedWidth(1) * 0.3;
     this.velocity = 0;
-    this.maxVelocity = 150;
-    this.acceleration = 15;
+    this.maxVelocity = unit.getCalculatedWidth(4);
+    this.acceleration = unit.getCalculatedWidth(1) * 0.5;
     this.lift = 0;
-    this.maxLift = -200;
+    this.maxLift = -unit.getCalculatedWidth(5);
     this.jumping = false;
 }
 

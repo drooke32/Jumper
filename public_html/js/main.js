@@ -7,22 +7,23 @@
  * @param {type} world
  * @param {type} canvas
  * @param {type} ctx
+ * @param {type} unit
  */
-function redraw(player, world, canvas, ctx){
+function draw(player, world, canvas, ctx, unit){
     //fill the canvas with white
     ctx.fillStyle = "#fff";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     //add a border around the canvas
-    ctx.strokeRect(20, 20, canvas.width-40, canvas.height-40);
+    ctx.strokeRect(unit.getCalculatedWidth(1), unit.getCalculatedHeight(1), unit.getCanvasWidth() - unit.getCalculatedWidth(2), unit.getCanvasHeight() - unit.getCalculatedHeight(2));
     //check to make sure the player won't be moving off of the world
     world.validatePlayerPosition(player);
     //move the player then apply the world physics to the player    
     player.move();    
     world.applyPhysics(player);
     //draw the player
-    ctx.strokeRect(player.currentX(), player.currentY(), player.height, player.width);    
+    ctx.strokeRect(player.currentX(), player.currentY(), player.width, player.height);    
     //wrap the callback function in an anon func so we can pass in parameters
-    requestAnimationFrame(function(){redraw(player,world, canvas, ctx);});
+    requestAnimationFrame(function(){draw(player,world, canvas, ctx, unit);});
 };
 
 /**
@@ -38,17 +39,14 @@ function bindMovementKeys(player){
     $(document).keydown(function(e) {
         switch(e.which) {
             case 37: // left
-                //player.movement[37]
                 player.movement[37] = true;
             break;
 
             case 39: // right
-                //player.movement[39]
                 player.movement[39] = true;
             break;
 
             case 32: // space
-                //player.movement[32]
                 player.movement[32] = true;
             break;
 
@@ -104,11 +102,12 @@ function startGame(){
     canvas.height = window.innerHeight * .8;
     var ctx = canvas.getContext('2d'); 
     //generate the player and the world
-    var player = new Player();
-    var world = new World(canvas);
+    var unit = new Unit(canvas);
+    var player = new Player(unit);
+    var world = new World(unit);
     placePlayerAtStart(player, world);
     bindMovementKeys(player);
-    redraw(player, world, canvas, ctx);
+    draw(player, world, canvas, ctx, unit);
 }
 
 /** 

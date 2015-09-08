@@ -2,16 +2,16 @@
 /**
  * Constructor for the World object
  * 
- * @param {type} canvas - HTML5 canvas used to set world Boundaries
+ * @param {type} unit - Standardized unit object used to determine relative width/height
  * @returns {World}
  */
-function World(canvas){
-    this.leftBoundary = 20;
-    this.rightBoundary = canvas.width - 70;
-    this.bottomBoundary = canvas.height - 70;
-    this.topBoundary = 20;
-    this.gravity = 15;
-    this.friction = 10;
+function World(unit){
+    this.leftBoundary = unit.getCalculatedWidth(1);
+    this.rightBoundary = unit.getCanvasWidth() - unit.getCalculatedWidth(2);
+    this.bottomBoundary = unit.getCanvasHeight() - unit.getCalculatedHeight(3);
+    this.topBoundary = unit.getCalculatedHeight(1);
+    this.gravity = unit.getCalculatedHeight(1) * 0.5;
+    this.friction = unit.getCalculatedWidth(1) * 0.3;
 }
 
 /**
@@ -30,9 +30,9 @@ World.prototype.applyPhysics = function(player){
  * @param {type} player
  */
 World.prototype.applyFriction = function(player){
-    if (player.movingRight()) {
+    if (player.movingRight() && player.velocity > this.friction) {
         player.velocity -= this.friction;
-    }else if(player.movingLeft()){
+    }else if(player.movingLeft() && player.velocity < this.friction){
         player.velocity += this.friction;
     }else if(player.velocity < this.friction || player.velocity > -this.friction){
         player.velocity = 0;
